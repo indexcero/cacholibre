@@ -8,5 +8,6 @@ Algunas ideas que marcan el desarollo del juego son:
 - Rápido y dinámico entre los turnos. (Pantallas de carga al mínimo)
 - Se puede jugar tanto en GUI como en línea de comandos.
 - Código fácil de leer. 
+- Escrito totalmente en python
 - (En proyecto) Modo multijugador
 
