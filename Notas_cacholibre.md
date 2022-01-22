@@ -1,5 +1,10 @@
 ## Tareas por hacer 
 
+Ahorita si se puede reemplazar los número
+Ahora borrar borra las dos grandes
+
+Primero que funcione todo, y después cambiamos la separación de GUI y command line
+
 ### El objeto de ver estado debe retornar también si el turno ha terminado
 ### Explicar que retornos guarda cada función
 
@@ -8,7 +13,6 @@
 - Revisar dónde puede el jugador puede anotar su jugada
   - Revisar la obligatoriedad del turno, si o si se debe anotar
     - Quizás algo como
-
 ```python
 
 self.turno_de_adrian = 1
