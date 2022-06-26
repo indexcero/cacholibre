@@ -11,10 +11,10 @@ class Lanzada:
             self.jugada[counter]=random.randint(1,6)
             counter += 1
         return(self.jugada)
-    def ver_dormida(self):
-        # Esta función está fallando
+    def ver_dormida(self, jugada):
         self.dormida = False
         dados_repetidos = 0
+        self.jugada = jugada
         for i in self.jugada:
             dados_repetidos = self.jugada.count(i)
         if dados_repetidos > 4:
@@ -29,7 +29,6 @@ class Analisis:
         self.puntajes_ganadores = {}
         self.suma_numeros_repetidos = []
     def ver_numeros_repetidos(self):
-        # La array de lanzamiento se llama self.jugada
         lanzada = self.jugada
         counter = 0
         self.senas= []
@@ -65,7 +64,7 @@ class Analisis:
         return(self.suma_numeros_repetidos)
 
     def ver_opciones_numeros(self):
-        #Aquí está tomando unos números muy extraños
+        #Aquí está tomando unos números muy extraños? Esto sigue siendo cierto?
         grupo_numeros_repetidos = self.sumar_numeros_repetidos()
         self.puntajes = {'Senas':grupo_numeros_repetidos[0], 'Quinas':grupo_numeros_repetidos[1],
                     'Cuadras':grupo_numeros_repetidos[2],'Trenes':grupo_numeros_repetidos[3],
@@ -151,28 +150,19 @@ class Cambio:
     def __init__(self, jugada, de_mano):
         self.jugada = jugada
         self.de_mano = de_mano
-    def volcar_dados(self):
-        # Revisar funcionamiento, tiene bastantes bugs
+
+    def volcar_dados(self, lista_dados):
         self.de_mano = False
-        self.dado_intercambiable = int(input(f'Qué dado quisieras volcar?: '))        
-        if self.jugada[self.dado_intercambiable] == 1:
-            self.jugada[self.dado_intercambiable] = 6
-        if self.jugada[self.dado_intercambiable] == 2:
-            self.jugada[self.dado_intercambiable] = 5
-        if self.jugada[self.dado_intercambiable] == 3:
-            self.jugada[self.dado_intercambiable] = 4
-        if self.jugada[self.dado_intercambiable] == 4:
-            self.jugada[self.dado_intercambiable] = 3
-        if self.jugada[self.dado_intercambiable] == 5:
-            self.jugada[self.dado_intercambiable] = 2
-        if self.jugada[self.dado_intercambiable] == 6:
-            self.jugada[self.dado_intercambiable] = 1
+        self.lista_dados = lista_dados
+        intercambios = {1:6,2:5,3:4,4:3,5:2,6:1}
+        for numero in lista_dados:
+            self.jugada[self.jugada.index(numero)] = intercambios[numero]
         return(self.jugada, self.de_mano)
 
-    def volver_a_lanzar(self):
-        dados_lanzables = input('¿Qué dados quieres volver a lanzar? ').split()
+    def volver_a_lanzar(self, dados_lanzables):
+        self.dados_lanzables = dados_lanzables
         self.de_mano = False
-        for element in dados_lanzables:
+        for element in self.dados_lanzables:
             self.jugada[int(element)] = random.randint(1,6)
         return(self.jugada, self.de_mano)
 
@@ -241,6 +231,8 @@ class Poderes:
 
 
 class Jugar:
+    #Esta es una de las clases más problemáticas, 
+    #deberíamos cambiar esto por llamadas a sqlite
     def __init__(self, nombre_jugador):
         self.nombre_jugador = nombre_jugador
         self.de_mano = True
@@ -266,7 +258,7 @@ class Jugar:
         self.jugada_anotada = False
         Accion = input(f'''¿Qué desea hacer?
                         - Lanzar (h)
-                        - Volver a lanzar dados(k)
+                        - Cambiar o volcar dados (k)
                         - Anotar mi jugada(l)
                         - Ver mi jugada(v)
                         - Ver la tabla de puntajes(t)
@@ -298,58 +290,63 @@ class Jugar:
             #preguntar sólo una vez que ya haya realizado su pregunta. 
             self.borrar()
         if Accion == 'w':
-            self.estado_juego()
+            self.check_estado_juego()
         if Accion == 'x':
             quit()
 
 
     def lanzar(self):
         self.jugada = Lanzada().lanzar()
-        # Jugada por depurar 
-        # self.dormida = Lanzada().ver_dormida()
-        #print(f'Es dormida? {self.dormida}')
-        return(self.jugada)
+        self.de_mano = True
+        self.es_dormida = Lanzada().ver_dormida(self.jugada)
+        return(self.jugada, self.es_dormida)
+
     def analizar(self):
         Analisis_objeto = Analisis(self.jugada)
-        print(f'\n Tu jugada es: {Analisis_objeto.jugada} \n ')
-
         #Diccionario de resultados: 
         Resultados = Analisis_objeto.devolver_resultados()
         self.opciones_numeros = Analisis_objeto.ver_opciones_numeros()
-        print(f'Todas las posibilidades numéricas son {self.opciones_numeros}')
-        print(f'{Resultados} \n')
-
         Poderes_objeto = Poderes(self.de_mano, Resultados['Escalera'],
                         Resultados['Full'],
                         Resultados['Poker'], Resultados['Grande'])
 
         self.Puntajes_poderes = Poderes_objeto.devolver_puntajes()
 
-        print(f'Los diccionarios de puntaje están así \n\n: {self.Puntajes_poderes} \n \n')
         return(self.Puntajes_poderes,self.opciones_numeros)
 
-    def cambiar(self):
+    def volcar(self, dados_cambiables):
+        """
+        Toma un int para volcar el dado
+        """
+        self.dados_cambiables = dados_cambiables
         Cambio_objeto = Cambio(self.jugada, self.de_mano)
-        nueva_jugada = Cambio_objeto.volver_a_lanzar()
+        nueva_jugada = Cambio_objeto.volcar_dados(dados_cambiables)
+        self.jugada = nueva_jugada[0]
+        self.de_mano = nueva_jugada[1]
+        return(self.jugada, self.de_mano)
+    
+    def cambiar(self, dados_cambiables):
+        """
+        Toma una string para volver a lanzar los dados
+        """
+        self.dados_cambiables = dados_cambiables
+        Cambio_objeto = Cambio(self.jugada, self.de_mano)
+        nueva_jugada = Cambio_objeto.volver_a_lanzar(self.dados_cambiables)
         self.jugada = nueva_jugada[0]
         self.de_mano = nueva_jugada[1]
         return(self.jugada, self.de_mano)
 
-    def anotar(self):
-        #Solución provisional, pensar cómo cambiar esto
+    def anotar(self, eleccion):
         self.analizar()
-        print(f'¿La jugada es de mano? {self.de_mano}')
-        print(f'Tus posibilidades numéricas son {self.Puntajes_poderes}')
-        print(f'Tus posibilidades numéricas son {self.opciones_numeros}')
-        elec = input('Que quisieras anotar? (Para borrar escribe "X"):')
+        self.elec = eleccion
 
-        if elec == 'X':
+        if self.elec == 'X':
             self.borrar()
 
         # Ver cómo mejorar este código con un iterable.
         #If elec no puede completarse, repetir la acción
         #Pedir al jugador si quisiera borrar una opción
-        if self.Puntajes_poderes['Escalera'] != 0 and elec =='Escalera':
+        if self.Puntajes_poderes['Escalera'] != 0 and self.elec =='Escalera':
             if self.escalera_guardar == '_':
                 self.escalera_guardar = self.Puntajes_poderes['Escalera']
                 #Tal vez matar la función con return de self.escalera_guardar
@@ -357,8 +354,9 @@ class Jugar:
                 return(self.escalera_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.Puntajes_poderes['Grande'] != 0 and elec =='Grande':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.Puntajes_poderes['Grande'] != 0 and self.elec =='Grande':
             print('Anotaré grande')
             if self.grande_1_guardar == '_':
                 self.grande_1_guardar = self.Puntajes_poderes['Grande']
@@ -371,8 +369,9 @@ class Jugar:
                     return(self.grande_2_guardar)
                 else:
                     print('No puedo guardar ahí, espacio lleno')
-                    self.anotar()
-        if self.Puntajes_poderes['Poker'] != 0 and elec =='Poker':
+                    self.turno_completo = False
+                    return(self.turno_completo)
+        if self.Puntajes_poderes['Poker'] != 0 and self.elec =='Poker':
             print('Anotaré poker')
             if self.poker_guardar == '_':
                 self.poker_guardar = self.Puntajes_poderes['Poker']
@@ -380,8 +379,9 @@ class Jugar:
                 return(self.poker_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.Puntajes_poderes['Full'] != 0 and elec =='Full':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.Puntajes_poderes['Full'] != 0 and self.elec =='Full':
             print('Anotaré full')
             if self.full_guardar == '_':
                 self.full_guardar = self.Puntajes_poderes['Full']
@@ -389,62 +389,66 @@ class Jugar:
                 return(self.full_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
+                self.turno_completo = False
+                return(self.turno_completo)
         
-        if self.opciones_numeros['Balas'] != 0 and elec=='Balas':
+        if self.opciones_numeros['Balas'] != 0 and self.elec=='Balas':
             if self.balas_guardar == '_':
                 self.balas_guardar = self.opciones_numeros['Balas']
                 self.turno_completo = True
                 return(self.balas_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.opciones_numeros['Tontos'] != 0  and elec=='Tontos':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.opciones_numeros['Tontos'] != 0  and self.elec=='Tontos':
             if self.tontos_guardar == '_':
                 self.tontos_guardar = self.opciones_numeros['Tontos']
                 self.turno_completo = True
                 return(self.tontos_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.opciones_numeros['Trenes'] != 0 and elec=='Trenes':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.opciones_numeros['Trenes'] != 0 and self.elec=='Trenes':
             if self.trenes_guardar == '_':
                 self.turno_completo = True
                 self.trenes_guardar = self.opciones_numeros['Trenes']
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.opciones_numeros['Cuadras'] != 0 and elec=='Cuadras':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.opciones_numeros['Cuadras'] != 0 and self.elec=='Cuadras':
             if self.cuadras_guardar == '_':
                 self.turno_completo = True
                 self.cuadras_guardar = self.opciones_numeros['Cuadras']
                 return(self.cuadras_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.opciones_numeros['Quinas'] != 0 and elec=='Quinas':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.opciones_numeros['Quinas'] != 0 and self.elec=='Quinas':
             if self.quinas_guardar == '_':
                 self.quinas_guardar = self.opciones_numeros['Quinas']
                 self.turno_completo = True
                 return(self.quinas_guardar)
             else:
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-        if self.opciones_numeros['Senas'] != 0 and elec=='Senas':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.opciones_numeros['Senas'] != 0 and self.elec=='Senas':
             if self.senas_guardar == '_':
                 self.senas_guardar = self.opciones_numeros['Senas']
                 self.turno_completo = True
                 return(self.senas_guardar)
             else:
+                self.turno_completo = False
+                return(self.turno_completo)
                 print('No puedo guardar ahí, espacio lleno')
-                self.anotar()
-
-
-
     
-    def borrar(self):
-        borrar_input = input('¿Qué casilla quisieras borrar?')
-        if borrar_input == 'Senas':
+    def borrar(self, borrar):
+        self.borrar_input = borrar
+        if self.borrar_input == 'Senas':
             if self.senas_guardar == '_':
                 self.senas_guardar = 0
                 self.turno_completo = True
@@ -452,78 +456,90 @@ class Jugar:
                 return(self.senas_guardar)
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Quinas':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Quinas':
             if self.quinas_guardar == '_':
                 self.quinas_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Cuadras':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Cuadras':
             if self.cuadras_guardar == '_':
                 self.cuadras_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Trenes':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Trenes':
             if self.trenes_guardar == '_':
                 self.trenes_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Tontos':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Tontos':
             if self.tontos_guardar == '_':
                 self.tontos_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Balas':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Balas':
             if self.balas_guardar == '_':
                 self.balas_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Escalera':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Escalera':
             if self.escalera_guardar == '_':
                 self.escalera_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Full':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Full':
             if self.full_guardar == '_':
                 self.full_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Poker':
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Poker':
             if self.poker_guardar == '_':
                 self.poker_guardar = 0
             else:
                 print('No puedo borrar esa casilla, casilla llena')
-                self.borrar()
-        if borrar_input == 'Grande':
-            if self.grande_1_guardar != 0:
+                self.turno_completo = False
+                return(self.turno_completo)
+        if self.borrar_input == 'Grande':
+            if self.grande_1_guardar == '_':
                 self.grande_1_guardar = 0
-            if self.grande_2_guardar != 0:
+                return(self.grande_1_guardar)
+            if self.grande_2_guardar == '_':
                 self.grande_2_guardar = 0
+                return(self.grande_2_guardar)
             else:
                 print(' No puedo borrar, casillas ya borradas')
-                self.borrar()
-        pass
+                self.turno_completo = False
+                return(self.turno_completo)
+
 
     def actualizar_resultados(self):
         self.diccionario_resultados = {'Nombre' : self.nombre_jugador,
+                                    'Balas_g' : self.balas_guardar,
                                     'Escalera_g' : self.escalera_guardar,
-                                    'Poker_g': self.poker_guardar,
+                                    'Cuadras_g' : self.cuadras_guardar,
+                                    'Tontos_g' : self.tontos_guardar,
                                     'Full_g': self.full_guardar,
+                                    'Quinas_g': self.quinas_guardar,
+                                    'Trenes_g' : self.trenes_guardar,
+                                    'Poker_g': self.poker_guardar,
+                                    'Senas_g': self.senas_guardar,
                                     'Grande1_g': self.grande_1_guardar,
                                     'Grande2_g': self.grande_2_guardar,
-                                    'Balas_g' : self.balas_guardar,
-                                    'Tontos_g' : self.tontos_guardar,
-                                    'Trenes_g' : self.trenes_guardar,
-                                    'Cuadras_g' : self.cuadras_guardar,
-                                    'Quinas_g': self.quinas_guardar,
-                                    'Senas_g': self.senas_guardar
                                     }
         return(self.diccionario_resultados)
 
@@ -554,6 +570,7 @@ class Jugar:
                 self.valores_completos += 1
             else:
                 counter +=1
+        #Atención! Revisar si esta función funciona: Tal vez poner -1
         if self.valores_completos >= len(puntajes_limpio):
             self.puntajes_completos = True
             print('Juego completo')
@@ -596,11 +613,11 @@ class Jugar:
         if self.poker_completo:
             return(self.poker_completo)
 
-    def estado_juego(self):
+    def check_estado_juego(self):
         self.actualizar_resultados()
         self.juego_completo = False
         self.jugador_ganador = False
-        # if self.dormida:
+        #if self.es_dormida:
         #    self.juego_completo = True
         #    self.jugador_ganador = True
         if self.check_panza_de_oro():
@@ -613,19 +630,18 @@ class Jugar:
             self.juego_completo = True
         #Tal vez mejorar esta manera de tomar los puntajes
         puntajes_limpio = list(self.diccionario_resultados.values())[1:]
-        print(puntajes_limpio)
         self.puntaje_final = 0
         for i in range(len(puntajes_limpio)):
             if puntajes_limpio[i] != '_':
                 self.puntaje_final += puntajes_limpio[i]
-        print(f'''
-                El jugador se ha dormido? {'self.dormida'}
-                Existe la panza de oro? {self.check_panza_de_oro()}
-                Existen todos los pokers? {self.check_poker()}
-                Están todos los puntajes llenos? {self.check_puntajes()}
-                La cantidad de puntajes completos es {self.valores_completos}''')
-        print(f'El juego ha terminado? {self.juego_completo} El puntaje es: {self.puntaje_final}')
+        #print(f'''
+        #        Existe la panza de oro? {self.check_panza_de_oro()}
+        #        Existen todos los pokers? {self.check_poker()}
+        #        Están todos los puntajes llenos? {self.check_puntajes()}
+        #        La cantidad de puntajes completos es {self.valores_completos}''')
+        #print(f'El juego ha terminado? {self.juego_completo} El puntaje es: {self.puntaje_final}')
         return(self.juego_completo, self.jugador_ganador, self.puntaje_final)
+
 
     def imprimir_estado(self):
         self.Grafico = (f''' 
@@ -638,30 +654,3 @@ class Jugar:
 
         ''')
         print(self.Grafico)
-
-#Juego Solitario para realizar pruebas
-#Adrian = Jugar('Adrián')
-#while True: 
-#    Adrian.preguntar()
-
-def input_jugadores():
-    jugadores_input = input('¿Quiénes jugaran? \n')
-    lista_jugadores = jugadores_input.split()
-    jugadores_dict = dict.fromkeys(lista_jugadores, False)
-    
-    #Mientras en juego no haya terminado:
-    for key in jugadores_dict:
-        key = Jugar(key)
-        # Ahorita el while solo se quedará en un mismo jugador hasta que gane.
-        while key.juego_completo != True: 
-            key.preguntar()
-
-input_jugadores()
-
-class sistema_de_turnos():
-    def __init__(self):
-        pass
-    def turno(self):
-        #Si ya realizó la jugada, entonces preguntar si desea cambiar, pensar cómo implementar esto.
-        pass
-        
