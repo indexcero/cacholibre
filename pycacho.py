@@ -249,6 +249,7 @@ class Jugar:
         self.full_guardar = '_'
         self.grande_1_guardar = '_'
         self.grande_2_guardar = '_'
+        self.es_dormida = False
 
 
     def preguntar(self):
@@ -299,7 +300,8 @@ class Jugar:
         self.jugada = Lanzada().lanzar()
         self.de_mano = True
         self.es_dormida = Lanzada().ver_dormida(self.jugada)
-        return(self.jugada, self.es_dormida)
+        #self.es_dormida
+        return(self.jugada,self.es_dormida)
 
     def analizar(self):
         Analisis_objeto = Analisis(self.jugada)
