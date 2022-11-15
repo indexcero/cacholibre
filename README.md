@@ -10,7 +10,7 @@ Algunas ideas que marcan el desarollo del juego son:
 - Que se pueda aprender las reglas al jugar.
 - Qué sea rápido y dinámico entre los turnos. 
 - Sin Ads, pay to win, etc. Libre y gratuito. 
-- Escrito totalmente en Python. Frontend con la librería Kivy: [Link]
+- Escrito totalmente en Python. Frontend con la librería [Kivy](https://github.com/kivy/kivy) 
 - Gráficos a mi estilo pero que más adelante pueda escogerse entre distintas Skins.
 
 Características aún por implementar (En orden de importancia):
