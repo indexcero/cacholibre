@@ -1,4 +1,5 @@
 # Cacho Libre
+![Portada del juego con vaso de cacho y serpientes](https://raw.githubusercontent.com/indexcero/cacholibre/master/data/presplash.png)
 
 Un port multiplataforma del juego Cacho Alalay software libre (Licencia GNU) escrito totalmente en Python. 
 
