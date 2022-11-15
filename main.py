@@ -127,15 +127,11 @@ class Jugadores:
         for jugador in self.puntajes_todos_jugadores:
             # Puede que aquí esté el problema
             if all(x == True for x in self.juegos_completos.values()):
-                print(
-                    f'\n\n  El jugador {jugador}, tiene {self.puntajes_todos_jugadores[jugador]} puntos. \n ')
                 # Revisar esta función
                 self.juego_terminado = True
         self.puntajes_ordenados = {k: v for k, v in sorted(
             self.puntajes_todos_jugadores.items(), key=lambda item: item[1], reverse=True)}
-        print(f'Puntajes_ordenados: {self.puntajes_ordenados}')
-        print(f'Juegos_completos: {self.juegos_completos}')
-        print(f' ¿Algún jugador ganador? {self.jugadores_ganadores}')
+
         # Ahora sólo comprobamos el método del puntaje, no vemos las otras maneras de ganar
         for jugador in self.jugadores_ganadores:
             if self.jugadores_ganadores[jugador] == True:
@@ -248,14 +244,10 @@ class DormidaScreen(Screen):
         ganador_dormida = ObjectProperty(None)
 
     def on_pre_enter(self):
-        #Cambiar esto nombre
         self.nombre_jugador = Jugadores_objeto.devolver_nombre()
         self.ganador_dormida.text = f'¡Felicidades, {self.nombre_jugador}!'
         Clock.schedule_once(self.mostrar_dados, 0)
-        #Poner los dados de la dormida. 
-        #for k,v in Jugadores_objeto.puntajes_ordenados.items():
-        #    puntaje = Label(text=f" {k} : {v}", font_size=font_general)
-        #    self.puntajes.add_widget(puntaje)
+
 
     def mostrar_dados(self, _):
         self.Lanzada = Jugadores_objeto.jugada_actual
@@ -266,7 +258,6 @@ class DormidaScreen(Screen):
     def on_leave(self):
         #Implementar código para nueva partida aquí y en ganador screen para borrar todos los garbage data
         # En el archivo .kv poner root.nueva_partida en "on press"
-        print('Mevoy')
         Jugadores_objeto.limpiar_lista_jugadores()
 
 
@@ -277,11 +268,9 @@ class LanzarWidget(Screen):
         Jugadores_objeto.jugada_actual = Jugadores_objeto.lanzar()
     def on_leave(self, *args):
         dormida = Jugadores_objeto.ver_dormida()
-        print(f"Es dormida? {dormida}")
         if dormida:
             self.manager.current = 'Dormida'
 
-# Objetos sobre elementos simples
 
 
 class CachoWidget(BoxLayout):
@@ -312,7 +301,6 @@ class LanzadaScreen(Screen):
 
         for i in self.Lanzada:
             # Cambiar esto para la versión de computadora
-
             pos_x = int(random.randint(300, ancho-300))
             pos_y = int(random.randint(limite_arriba_dados, limite_abajo_dados))
             imagenesdados = ImagenDado(
@@ -347,7 +335,6 @@ class CambiarScreen(Screen):
 
     def mostrar_dados(self, _):
         self.Lanzada = Jugadores_objeto.jugada_actual
-        # let's add a Widget to this layout
         self.espacio_dados = FloatLayout()
         self.botones_dict = {}
         self.ids_y_valores = {}
@@ -357,13 +344,8 @@ class CambiarScreen(Screen):
         for i in self.Lanzada:
 
             key = 'dado_' + str(self.counter)
-            #image = Image(source=f'sprites/dado_{i}_des.png', size=(dado_size, dado_size))
             pos_x = int(random.randint(300, ancho-300))
             pos_y = int(random.randint(limite_arriba_dados, limite_abajo_dados))
-            #dado = Scatter(
-            #    size_hint=(None, None),
-            #    pos=(pos_x, pos_y),
-            #)
 
             dado = ImagenDado(
                 source=f'sprites/dado_{i}_des.png', pos=(pos_x, pos_y))
@@ -398,7 +380,6 @@ class CambiarScreen(Screen):
                              text=str(numero_dado),
                              color=(0, 0, 0, 0)
                              )
-        # self.campo_dados.remove_widget(self.ids[str(self.selected_id)])
         self.nuevo_id_dado = f'dado_select_{self.key_dado_select}'
         self.ids[self.nuevo_id_dado] = dado_select
         self.key_dado_select += 1
@@ -415,11 +396,7 @@ class CambiarScreen(Screen):
             print(f'No se pudo eliminar el dado: {instance.text}')
         valor_dado = instance.text
         self.dado_resucitado += 1
-        # try:
-        #    self.lista_seleccionados.remove(int(instance.text))
-        #    self.numeros_dados_seleccionados.remove(int(instance.text))
-        # except:
-        #    print('Dado no aparece en la lista')
+
 
         key = 'dado_' + str(self.counter)
 
@@ -446,9 +423,6 @@ class CambiarScreen(Screen):
 
     def relanzar(self):
         self.save_data()
-        # Hay que limpiar esta lista! Se mantienen los valores aún después de ser eliminados
-        print(
-            f'La lista de seleccionados es {self.numeros_dados_seleccionados}')
         lista_index_cambiar = []
         lanzada = self.Lanzada
         for numero in self.numeros_dados_seleccionados:
@@ -462,8 +436,6 @@ class CambiarScreen(Screen):
         self.manager.current = 'Anotar'
 
     def volcar(self):
-        # El método index falla en este momento???
-        # Deberíamos eliminar el dado de la lista y volver a añadirlo
         self.save_data()
         print(
             f'La lista de seleccionados es {self.numeros_dados_seleccionados}')
@@ -508,9 +480,8 @@ class AnotarScreen(Screen):
         for i in self.Lanzada:
             image = Image(source=f'sprites/dado_{i}.png', size=(dado_size,dado_size))
             self.dado = Scatter(
-                # id=(f'dado_{i}'),
                 size_hint=(None, None),
-            )  # este self.dado tiene que tener algún id
+            )  
             self.dado.add_widget(image)
             self.campo_dados.add_widget(self.dado)
 
@@ -590,16 +561,10 @@ class AnotarScreen(Screen):
                            )
             if i != 'Grande':
                 if Jugadores_objeto.actualizar_resultados()[i + '_g'] == '_':
-                    # ATENCIÓN este método tiene un error que no acepta las grandes
-                    # Cambiar este metodo a iteración de diccionario
-                    # for k, v
-                    # If opciones value != 0:
-                    # Este error continúa?
                     self.botones_opciones.add_widget(Boton)
                     self.cantidad_opciones += 1
 
         espacio_vacio = Label(size_hint=(1,.7))
-        print(f"CANTIDAD DE OPCIONES: {self.cantidad_opciones}")
         if self.cantidad_opciones <= 1:
             self.botones_opciones.add_widget(espacio_vacio)
         Boton_otro = Button(text=f'Otras opciones',
@@ -616,7 +581,6 @@ class AnotarScreen(Screen):
 
     def opcion_elegida(self, instance):
         eleccion = str(instance.text)
-        print(f'La elección es {eleccion}')
         Jugadores_objeto.anotar(eleccion)
         Jugadores_objeto.actualizar_resultados()
         Juego_finalizado = Jugadores_objeto.check_ganador()[0]
@@ -626,7 +590,6 @@ class AnotarScreen(Screen):
             Jugadores_objeto.cambiar_turno()
             self.manager.current = 'Turno'
         self.mostrar_anotado()
-        #self.manager.current = 'Turno'
 
     def mostrar_anotado(self):
         # Esta función si tiene una utilidad
@@ -698,10 +661,6 @@ class OpcionesScreen(Screen):
         self.fin_opciones = False
         cantidad_opciones = 0
         for k, v in opciones.items():
-            #height: 15
-            #font_size: 22
-            #background_normal: 'sprites/button_up_2_alert.png'
-            #background_down: 'sprites/button_down_2_alert.png'
             Boton = Button(text=f'{k}',
                            font_size=font_general,
                            size_hint=(1, .3),
@@ -730,8 +689,6 @@ class OpcionesScreen(Screen):
                               background_down='sprites/button_naranja_down.png',
                               on_press=self.borrar_casilla
                               )
-        # Checkear si el jugador no volvió a lanzar
-
         if self.fin_opciones:
             self.botones_opciones_op.add_widget(Espacio_vacio)
         if Jugadores_objeto.get_mano():
@@ -742,17 +699,14 @@ class OpcionesScreen(Screen):
         self.manager.current = 'Cambiar'
 
     def borrar_casilla(self, instance):
-        # Aquí tal vez Check if juego finalizado
         self.manager.current = 'Borrar'
 
     def opcion_elegida(self, instance):
         eleccion = str(instance.text)
-        print(f'La elección es {eleccion}')
         Jugadores_objeto.anotar(eleccion)
         Jugadores_objeto.actualizar_resultados()
         Jugadores_objeto.cambiar_turno()
         self.mostrar_anotado()
-        #self.manager.current = 'Turno'
         self.cambiar_jugador()
 
     def mostrar_anotado(self):
@@ -814,7 +768,6 @@ class BorrarScreen(Screen):
                 numero_lleno = Button(text=str(v),
                                       font_size=font_general,
                                       size_hint=(1, 1),
-                                      # id=str(k),
                                       color=(0, 0, 0, 1),
                                       background_normal='sprites/numero_anotado.png',
                                       )
@@ -852,7 +805,6 @@ class BorrarScreen(Screen):
         self.papel_bo.add_widget(self.container)
 
     def get_grande_selected(self, instance):
-        # Cambiar esta función para eliminar grandes
         self.mensaje.clear_widgets()
         self.confirmar.clear_widgets()
         self.key = instance.text[:-3]
@@ -869,7 +821,6 @@ class BorrarScreen(Screen):
     def mostrar_mensaje(self, mensaje):
         texto_confirmacion = Label(text=f"¿Segur@ que desea borrar {mensaje}?",
                                    color=(1, 1, 1, 1),
-                                   #size_hint= (1,0.2),
                                    font_size=font_general,
                                    #font_name= 'fonts/Titillium_Web/TitilliumWeb-SemiBold.ttf'
                                    )
@@ -893,16 +844,12 @@ class BorrarScreen(Screen):
         self.mensaje.clear_widgets()
         self.confirmar.clear_widgets()
         self.papel_bo.clear_widgets()
-        # Aquí se encuentra el problema
-        # Ver si el check ganador debería ir aquí
         Juego_finalizado = Jugadores_objeto.check_ganador()[0]
         if Juego_finalizado:
             self.manager.current = 'Ganador'
         else:
             Jugadores_objeto.cambiar_turno()
             self.manager.current = 'Turno'
-        # Tal vez esta repeticiṕon es la causa de todoooos los problemaas!!!!!!!!
-        # Jugadores_objeto.cambiar_turno()
 
 
 class JuegoApp(App):
@@ -925,7 +872,7 @@ class JuegoApp(App):
         sm.add_widget(CambiarScreen())
         sm.add_widget(BorrarScreen())
         return (sm)
-        # return(GanadorScreen())
+
 
 
 if __name__ == '__main__':
